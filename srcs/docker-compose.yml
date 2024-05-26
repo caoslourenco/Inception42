@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  mariadb:
+    container_name: mariadb
+    image: mariadb:1.0
+    build:
+      context: ./requirements/mariadb
+      args:
+        - WORDPRESS_DATABASE
+        - WORDPRESS_USER
+        - WORDPRESS_PASSWORD
+    networks:
+      - wordpress
+    volumes:
+      - mariadb:/var/lib/mysql
+    restart: always
+  
+  wordpress:
+    container_name: wordpress
+    image: wordpress:1.0
+    build:
+      context: ./requirements/wordpress
+      args:
+        - WORDPRESS_DATABASE
+        - WORDPRESS_USER
+        - WORDPRESS_PASSWORD
+    depends_on:
+      - mariadb
+    networks:
+      - wordpress
+    volumes:
+      - wordpress:/var/www/html
+    restart: always
+
+  nginx:
+    container_name: nginx
+    image: nginx:1.0
+    build:
+      context: ./requirements/nginx
+    depends_on:
+      - wordpress
+    networks:
+      - wordpress
+    ports:
+      - 443:443
+    volumes:
+      - wordpress:/var/www/html
+    restart: always
+
+networks:
+  wordpress:
+    driver: bridge
+
+volumes:
+  mariadb:
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/clourenc/data/mariadb
+  wordpress:
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/clourenc/data/wordpress
