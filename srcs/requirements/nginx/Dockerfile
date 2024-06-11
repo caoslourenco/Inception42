@@ -1,14 +1,16 @@
-FROM debian:11
+FROM debian:oldstable
 
-RUN apt update && apt upgrade -y && \
-	apt install -y nginx && apt install openssl -y
+RUN apt update -y && apt upgrade -y \
+    && apt install nginx openssl -y
 
 RUN openssl req -batch -x509 -sha256 -nodes -newkey rsa:2048 -days 365 \
-	-keyout /etc/ssl/private/localhost.key \
-	-out /etc/ssl/certs/localhost.crt
+	-keyout /etc/ssl/private/private.key \
+	-out /etc/ssl/certs/certificate.crt \
+	-subj "/C=BR/ST=SP/L=Sao Paulo/O=42sp/CN=clourenc.42.fr"
 
 COPY ./conf/nginx.conf /etc/nginx/conf.d
 
-EXPOSE 443
+RUN chmod 755 /var/www
+RUN chown -R www-data:www-data /var/www
 
-CMD [ "nginx", "-g", "daemon off;" ]
+CMD ["nginx", "-g", "daemon off;"]
