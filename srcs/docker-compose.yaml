@@ -1,4 +1,5 @@
 version: '3.8'
+# Define a versão do Docker Compose a ser usada.
 
 ##########################################################
 ##########              NETWORKS                ##########
@@ -6,7 +7,7 @@ version: '3.8'
 networks:
   inception:
     name: inception
-
+# Define uma rede chamada "inception" para comunicação entre os containers.
 
 ##########################################################
 ##########              VOLUMES                 ##########
@@ -18,6 +19,8 @@ volumes:
       o: bind
       type: none
       device: /home/clourenc/data/wordpress
+    # Define um volume chamado "wordpress_volume" que será ligado ao diretório local 
+    # "/home/clourenc/data/wordpress".
 
   mariadb_volume:
     name: mariadb_volume
@@ -25,7 +28,8 @@ volumes:
       o: bind
       type: none
       device: /home/clourenc/data/mariadb
-
+    # Define um volume chamado "mariadb_volume" que será ligado ao diretório local 
+    # "/home/clourenc/data/mariadb".
 
 ##########################################################
 ##########              SERVICES                ##########
@@ -36,31 +40,43 @@ services:
   ##########              SERVICE                 ##########
   ##########              MARIADB                 ##########
   ##########################################################
-
   mariadb:
     image: mariadb:42sp
     container_name: mariadb
+    # Define a imagem e o nome do container para o serviço MariaDB.
 
     env_file:
       - .env
+    # Especifica um arquivo de ambiente contendo variáveis.
+
     build:
       context: requirements/mariadb
       args:
         - ADMIN_NAME=${ADMIN_NAME}
         - ADMIN_PASSWORD=${ADMIN_PASSWORD}
         - DB_NAME=${DB_NAME}
+    # Define o contexto de build e os argumentos passados durante o build do Dockerfile.
+
     environment:
       - ADMIN_NAME
       - ADMIN_PASSWORD
       - DB_NAME
+    # Define variáveis de ambiente para o container MariaDB.
+
     volumes:
       - mariadb_volume:/var/lib/mysql
+    # Monta o volume mariadb_volume no diretório "/var/lib/mysql" dentro do container.
+
     networks:
       - inception
+    # Conecta o serviço à rede "inception".
+
     expose:
       - 3306
-    restart: on-failure
+    # Expõe a porta 3306 (porta padrão do MariaDB) dentro da rede do Docker.
 
+    restart: on-failure
+    # Define a política de reinício do container como "reiniciar em caso de falha".
 
   ##########################################################
   ##########              SERVICE                 ##########
@@ -69,12 +85,16 @@ services:
   wordpress:
     depends_on:
       - mariadb
+    # Define uma dependência do serviço MariaDB. O Wordpress só inicia após o MariaDB estar pronto.
 
     image: wordpress:42sp
     container_name: wordpress
+    # Define a imagem e o nome do container para o serviço Wordpress.
 
     env_file:
       - .env
+    # Especifica um arquivo de ambiente contendo variáveis.
+
     build:
       context: requirements/wordpress
       args:
@@ -86,6 +106,8 @@ services:
         - USER_NAME=${USER_NAME}
         - USER_PASSWORD=${USER_PASSWORD}
         - USER_EMAIL=${USER_EMAIL}
+    # Define o contexto de build e os argumentos passados durante o build do Dockerfile.
+
     environment:
       - DB_NAME
       - TITLE
@@ -95,13 +117,22 @@ services:
       - USER_NAME
       - USER_PASSWORD
       - USER_EMAIL
+    # Define variáveis de ambiente para o container Wordpress.
+
     volumes:
       - wordpress_volume:/var/www/wordpress
+    # Monta o volume wordpress_volume no diretório "/var/www/wordpress" dentro do container.
+
     networks:
       - inception
+    # Conecta o serviço à rede "inception".
+
     expose:
       - 9000
+    # Expõe a porta 9000 (porta que o Wordpress usará) dentro da rede do Docker.
+
     restart: on-failure
+    # Define a política de reinício do container como "reiniciar em caso de falha".
 
   ##########################################################
   ##########              SERVICE                 ##########
@@ -110,20 +141,27 @@ services:
   nginx:
     depends_on:
       - wordpress
+    # Define uma dependência do serviço Wordpress. O Nginx só inicia após o Wordpress estar pronto.
 
     image: nginx:42sp
     container_name: nginx
+    # Define a imagem e o nome do container para o serviço Nginx.
 
     build:
       context: requirements/nginx
+    # Define o contexto de build do Dockerfile para o Nginx.
 
     ports:
       - 443:443
+    # Mapeia a porta 443 (HTTPS) do host para a porta 443 do container.
 
     volumes:
       - wordpress_volume:/var/www/wordpress
+    # Monta o volume wordpress_volume no diretório "/var/www/wordpress" dentro do container.
 
     networks:
       - inception
+    # Conecta o serviço à rede "inception".
 
     restart: on-failure
+    # Define a política de reinício do container como "reiniciar em caso de falha".
